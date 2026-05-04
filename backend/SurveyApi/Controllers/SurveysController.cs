@@ -21,4 +21,23 @@ public class SurveysController : ControllerBase
     {
         return await _context.Surveys.ToListAsync();
     }
+    [HttpGet("{id}")]
+    public async Task<ActionResult<Survey>> GetSurvey(int id)
+    {
+        var survey = await _context.Surveys.FindAsync(id);
+        
+        if (survey == null)
+            return NotFound();
+            
+        return survey;
+    }
+    [HttpPost]
+    public async Task<ActionResult<Survey>> CreateSurvey(Survey survey)
+    {
+        survey.CreatedAt = DateTime.UtcNow;
+        _context.Surveys.Add(survey);
+        await _context.SaveChangesAsync();
+
+        return CreatedAtAction(nameof(GetSurvey), new { id = survey.Id }, survey);
+   }
 }
