@@ -26,24 +26,30 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<ActionResult<UserResponseDto>> Register(CreateUserDto createDto)
     {
+        Console.WriteLine($"Registration attempt: {createDto.Email}");
+
         // Check if user exists
         var existingUser = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == createDto.Email);
         
         if (existingUser != null)
+        {
+            Console.WriteLine("User already exists");
             return BadRequest("User with this email already exists");
+        }
 
         var user = new User
         {
             Login = createDto.Login,
             Email = createDto.Email,
-            Password = createDto.Password, // In production: hash password!
+            Password = createDto.Password,
             CreatedAt = DateTime.UtcNow,
             IsAdmin = false
         };
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
+        Console.WriteLine($"User created with ID: {user.Id}");
 
         return Ok(new UserResponseDto
         {
