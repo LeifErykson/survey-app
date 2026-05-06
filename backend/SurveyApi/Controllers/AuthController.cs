@@ -23,6 +23,11 @@ public class AuthController : ControllerBase
         _configuration = configuration;
     }
 
+    /// <summary>
+    /// Register a new user
+    /// </summary>
+    /// <response code="200">Returns the created user</response>
+    /// <response code="400">If email already exists</response>
     [HttpPost("register")]
     public async Task<ActionResult<UserResponseDto>> Register(CreateUserDto createDto)
     {
@@ -61,6 +66,11 @@ public class AuthController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Login to get JWT token
+    /// </summary>
+    /// <response code="200">Returns JWT token and user info</response>
+    /// <response code="401">Invalid email or password</response>
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponseDto>> Login(LoginDto loginDto)
     {
@@ -71,14 +81,21 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid email or password");
 
         var token = GenerateJwtToken(user);
-        return Ok(new { token, user = new UserResponseDto
+        
+        var response = new LoginResponseDto
         {
-            Id = user.Id,
-            Login = user.Login ?? string.Empty,
-            Email = user.Email ?? string.Empty,
-            CreatedAt = user.CreatedAt,
-            IsAdmin = user.IsAdmin
-        } });
+            Token = token,
+            User = new UserResponseDto
+            {
+                Id = user.Id,
+                Login = user.Login ?? string.Empty,
+                Email = user.Email ?? string.Empty,
+                CreatedAt = user.CreatedAt,
+                IsAdmin = user.IsAdmin
+            }
+        };
+        
+        return Ok(response);
     }
 
     private string GenerateJwtToken(User user)
