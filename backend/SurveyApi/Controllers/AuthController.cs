@@ -62,7 +62,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<ActionResult<string>> Login(LoginDto loginDto)
+    public async Task<ActionResult<LoginResponseDto>> Login(LoginDto loginDto)
     {
         var user = await _context.Users
             .FirstOrDefaultAsync(u => u.Email == loginDto.Email && u.Password == loginDto.Password);
