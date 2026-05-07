@@ -6,8 +6,9 @@ interface Survey {
   id: number;
   title: string;
   description: string;
-  created_at: string;
-  is_active: boolean;
+  createdAt: string;
+  isActive: boolean;
+  user_id: number;
 }
 
 const SurveyList: React.FC = () => {
@@ -29,6 +30,35 @@ const SurveyList: React.FC = () => {
     loadSurveys();
   }, []);
 
+  const handleDelete = async (id: number) => {
+    if (!window.confirm('Are you sure you want to delete this survey?')) return;
+    
+    try {
+      await surveysApi.delete(id);
+      await loadSurveys();
+    } catch (error) {
+      console.error('Error deleting survey:', error);
+      alert('Failed to delete survey');
+    }
+  };
+
+  const handleToggleActive = async (id: number, currentStatus: boolean) => {
+    const survey = surveys.find(s => s.id === id);
+    if (!survey) return;
+    
+    try {
+      await surveysApi.update(id, {
+        title: survey.title,
+        description: survey.description,
+        isActive: !currentStatus
+      });
+      await loadSurveys();
+    } catch (error) {
+      console.error('Error updating survey:', error);
+      alert('Failed to update survey status');
+    }
+  };
+
   if (loading) return <div>Loading surveys...</div>;
 
   return (
@@ -37,8 +67,20 @@ const SurveyList: React.FC = () => {
       <CreateSurvey onSurveyCreated={loadSurveys} />
       <ul>
         {surveys.map((survey) => (
-          <li key={survey.id}>
+          <li key={survey.id} style={{ opacity: survey.isActive ? 1 : 0.5 }}>
             <strong>{survey.title}</strong> - {survey.description}
+            <br />
+            <small>Created by user: {survey.user_id}</small>
+            <br />
+            <small>Status: {survey.isActive ? 'Active' : 'Inactive'}</small>
+            <div>
+              <button onClick={() => handleToggleActive(survey.id, survey.isActive)}>
+                {survey.isActive ? 'Deactivate' : 'Activate'}
+              </button>
+              <button onClick={() => handleDelete(survey.id)} style={{ marginLeft: '10px' }}>
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
