@@ -1,13 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SurveyApi.Data;
 using SurveyApi.Models;
 using SurveyApi.DTOs;
+using System.Security.Claims;
 
 namespace SurveyApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]  // Require authentication for all endpoints
 public class SurveysController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -18,6 +21,7 @@ public class SurveysController : ControllerBase
     }
     
     [HttpGet]
+    [AllowAnonymous]  // Anyone can view surveys
     public async Task<ActionResult<IEnumerable<SurveyResponseDto>>> GetSurveys()
     {
         var surveys = await _context.Surveys
@@ -27,7 +31,6 @@ public class SurveysController : ControllerBase
                 Description = s.Description,
                 CreatedAt = s.CreatedAt,
                 IsActive = s.IsActive,
-                UserId = s.UserId
             })
             .ToListAsync();
             
@@ -35,6 +38,7 @@ public class SurveysController : ControllerBase
     }
     
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<SurveyResponseDto>> GetSurvey(int id)
     {
         var survey = await _context.Surveys.FindAsync(id);
@@ -48,18 +52,24 @@ public class SurveysController : ControllerBase
             Description = survey.Description,
             CreatedAt = survey.CreatedAt,
             IsActive = survey.IsActive,
-            UserId = survey.UserId
         };
     }
     
     [HttpPost]
     public async Task<ActionResult<SurveyResponseDto>> CreateSurvey(CreateSurveyDto createDto)
     {
+        // Get UserId from JWT token
+        var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null)
+            return Unauthorized("User not found in token");
+            
+        var userId = int.Parse(userIdClaim.Value);
+        
         var survey = new Survey
         {
             Title = createDto.Title,
             Description = createDto.Description,
-            UserId = createDto.UserId,
+            UserId = userId,  // From authenticated token, not from DTO
             CreatedAt = DateTime.UtcNow,
             IsActive = true
         };
@@ -73,7 +83,6 @@ public class SurveysController : ControllerBase
             Description = survey.Description,
             CreatedAt = survey.CreatedAt,
             IsActive = survey.IsActive,
-            UserId = survey.UserId
         });
     }
     
@@ -83,6 +92,11 @@ public class SurveysController : ControllerBase
         var survey = await _context.Surveys.FindAsync(id);
         if (survey == null)
             return NotFound();
+        
+        // Check if current user owns this survey
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        if (survey.UserId != userId && !User.IsInRole("Admin"))
+            return Forbid("You can only edit your own surveys");
             
         survey.Title = updateDto.Title;
         survey.Description = updateDto.Description;
@@ -99,6 +113,11 @@ public class SurveysController : ControllerBase
         var survey = await _context.Surveys.FindAsync(id);
         if (survey == null)
             return NotFound();
+        
+        // Check if current user owns this survey
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        if (survey.UserId != userId && !User.IsInRole("Admin"))
+            return Forbid("You can only delete your own surveys");
         
         _context.Surveys.Remove(survey);
         await _context.SaveChangesAsync();

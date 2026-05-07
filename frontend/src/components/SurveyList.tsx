@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { surveysApi } from '../services/api';
+import CreateSurvey from './CreateSurvey';
 
 interface Survey {
   id: number;
@@ -13,10 +14,6 @@ const SurveyList: React.FC = () => {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadSurveys();
-  }, []);
-
   const loadSurveys = async () => {
     try {
       const response = await surveysApi.getAll();
@@ -28,11 +25,16 @@ const SurveyList: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    loadSurveys();
+  }, []);
+
   if (loading) return <div>Loading surveys...</div>;
 
   return (
     <div>
       <h1>Surveys</h1>
+      <CreateSurvey onSurveyCreated={loadSurveys} />
       <ul>
         {surveys.map((survey) => (
           <li key={survey.id}>
