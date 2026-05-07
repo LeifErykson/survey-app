@@ -27,6 +27,7 @@ public class SurveysController : ControllerBase
         var surveys = await _context.Surveys
             .Select(s => new SurveyResponseDto
             {
+                Id = s.Id,
                 Title = s.Title,
                 Description = s.Description,
                 CreatedAt = s.CreatedAt,

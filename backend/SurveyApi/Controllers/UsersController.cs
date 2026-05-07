@@ -23,9 +23,7 @@ public class UsersController : ControllerBase
         var users = await _context.Users
             .Select(u => new UserResponseDto
             {
-                Id = u.Id,
                 Login = u.Login ?? string.Empty,
-                Email = u.Email ?? string.Empty,
                 CreatedAt = u.CreatedAt,
                 IsAdmin = u.IsAdmin
             })
@@ -44,9 +42,7 @@ public class UsersController : ControllerBase
             
         return new UserResponseDto
         {
-            Id = user.Id,
             Login = user.Login ?? string.Empty,
-            Email = user.Email ?? string.Empty,
             CreatedAt = user.CreatedAt,
             IsAdmin = user.IsAdmin
         };
@@ -69,9 +65,7 @@ public class UsersController : ControllerBase
         
         return CreatedAtAction(nameof(GetUser), new { id = user.Id }, new UserResponseDto
         {
-            Id = user.Id,
             Login = user.Login ?? string.Empty,
-            Email = user.Email ?? string.Empty,
             CreatedAt = user.CreatedAt,
             IsAdmin = user.IsAdmin
         });

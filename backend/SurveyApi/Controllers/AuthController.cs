@@ -58,9 +58,7 @@ public class AuthController : ControllerBase
 
         return Ok(new UserResponseDto
         {
-            Id = user.Id,
             Login = user.Login ?? string.Empty,
-            Email = user.Email ?? string.Empty,
             CreatedAt = user.CreatedAt,
             IsAdmin = user.IsAdmin
         });
@@ -87,9 +85,7 @@ public class AuthController : ControllerBase
             Token = token,
             User = new UserResponseDto
             {
-                Id = user.Id,
                 Login = user.Login ?? string.Empty,
-                Email = user.Email ?? string.Empty,
                 CreatedAt = user.CreatedAt,
                 IsAdmin = user.IsAdmin
             }
