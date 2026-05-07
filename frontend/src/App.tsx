@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import SurveyList from './components/SurveyList';
+import SurveyTabs from './components/SurveyTabs';
 import './App.css';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -20,7 +20,7 @@ function AppRoutes() {
   return (
     <div>
       {user && (
-        <div style={{ padding: '10px', background: '#f0f0f0', display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ padding: '10px', background: '#f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Welcome, {user.login}!</span>
           <button onClick={logout}>Logout</button>
         </div>
@@ -30,7 +30,7 @@ function AppRoutes() {
         <Route path="/register" element={<Register />} />
         <Route path="/" element={
           <ProtectedRoute>
-            <SurveyList />
+            <SurveyTabs />
           </ProtectedRoute>
         } />
       </Routes>

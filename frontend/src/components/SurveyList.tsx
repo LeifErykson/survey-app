@@ -8,16 +8,19 @@ interface Survey {
   description: string;
   createdAt: string;
   isActive: boolean;
-  user_id: number;
 }
 
-const SurveyList: React.FC = () => {
+interface SurveyListProps {
+  isMySurveys?: boolean;
+}
+
+const SurveyList: React.FC<SurveyListProps> = ({ isMySurveys = false }) => {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadSurveys = async () => {
     try {
-      const response = await surveysApi.getAll();
+      const response = await surveysApi.getPublic();
       setSurveys(response.data);
     } catch (error) {
       console.error('Error loading surveys:', error);
@@ -30,56 +33,23 @@ const SurveyList: React.FC = () => {
     loadSurveys();
   }, []);
 
-  const handleDelete = async (id: number) => {
-    if (!window.confirm('Are you sure you want to delete this survey?')) return;
-    
-    try {
-      await surveysApi.delete(id);
-      await loadSurveys();
-    } catch (error) {
-      console.error('Error deleting survey:', error);
-      alert('Failed to delete survey');
-    }
-  };
-
-  const handleToggleActive = async (id: number, currentStatus: boolean) => {
-    const survey = surveys.find(s => s.id === id);
-    if (!survey) return;
-    
-    try {
-      await surveysApi.update(id, {
-        title: survey.title,
-        description: survey.description,
-        isActive: !currentStatus
-      });
-      await loadSurveys();
-    } catch (error) {
-      console.error('Error updating survey:', error);
-      alert('Failed to update survey status');
-    }
-  };
-
   if (loading) return <div>Loading surveys...</div>;
+
+  if (surveys.length === 0) {
+    return <div>No active surveys available. Check back later!</div>;
+  }
 
   return (
     <div>
-      <h1>Surveys</h1>
-      <CreateSurvey onSurveyCreated={loadSurveys} />
+      <h2>Available Surveys</h2>
       <ul>
         {surveys.map((survey) => (
-          <li key={survey.id} style={{ opacity: survey.isActive ? 1 : 0.5 }}>
+          <li key={survey.id} style={{ marginBottom: '20px' }}>
             <strong>{survey.title}</strong> - {survey.description}
             <br />
-            <small>Created by user: {survey.user_id}</small>
-            <br />
-            <small>Status: {survey.isActive ? 'Active' : 'Inactive'}</small>
+            <small>Created: {new Date(survey.createdAt).toLocaleDateString()}</small>
             <div>
-              <button onClick={() => handleToggleActive(survey.id, survey.isActive)}>
-                {survey.isActive ? 'Deactivate' : 'Activate'}
-              </button>
-              <button onClick={() => handleDelete(survey.id)} style={{ marginLeft: '10px' }}>
-                Delete
-              </button>
+              <button>Take Survey</button>
             </div>
           </li>
         ))}

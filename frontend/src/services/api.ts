@@ -9,11 +9,32 @@ const api = axios.create({
   },
 });
 
+// Add token to requests if available
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export const surveysApi = {
-  getAll: () => api.get('/surveys'),
+  // Public surveys (anyone can view/take)
+  getPublic: () => api.get('/surveys/public'),
+  
+  // User's own surveys (created by logged-in user)
+  getMySurveys: () => api.get('/surveys/my'),
+  
+  // Get single survey by ID
   getById: (id: number) => api.get(`/surveys/${id}`),
+  
+  // Create new survey
   create: (data: any) => api.post('/surveys', data),
+  
+  // Update survey
   update: (id: number, data: any) => api.put(`/surveys/${id}`, data),
+  
+  // Delete survey
   delete: (id: number) => api.delete(`/surveys/${id}`),
 };
 

@@ -38,6 +38,45 @@ public class SurveysController : ControllerBase
         return surveys;
     }
     
+    [HttpGet("public")]
+    [AllowAnonymous]
+    public async Task<ActionResult<IEnumerable<SurveyResponseDto>>> GetPublicSurveys()
+    {
+        var surveys = await _context.Surveys
+            .Where(s => s.IsActive)
+            .Select(s => new SurveyResponseDto
+            {
+                Id = s.Id,
+                Title = s.Title,
+                Description = s.Description,
+                CreatedAt = s.CreatedAt,
+                IsActive = s.IsActive
+            })
+            .ToListAsync();
+            
+        return surveys;
+    }
+
+    [HttpGet("my")]
+    public async Task<ActionResult<IEnumerable<SurveyResponseDto>>> GetMySurveys()
+    {
+        var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+        
+        var surveys = await _context.Surveys
+            .Where(s => s.UserId == userId)
+            .Select(s => new SurveyResponseDto
+            {
+                Id = s.Id,
+                Title = s.Title,
+                Description = s.Description,
+                CreatedAt = s.CreatedAt,
+                IsActive = s.IsActive
+            })
+            .ToListAsync();
+            
+        return surveys;
+    }
+
     [HttpGet("{id}")]
     [AllowAnonymous]
     public async Task<ActionResult<SurveyResponseDto>> GetSurvey(int id)
