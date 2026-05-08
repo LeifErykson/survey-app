@@ -28,6 +28,15 @@ export const surveysApi = {
   // Get single survey by ID
   getById: (id: number) => api.get(`/surveys/${id}`),
   
+  // Get survey details with questions and answers
+  getSurveyDetails: (id: number) => api.get(`/surveys/${id}/details`),
+  
+  // Submit survey response
+  submitResponse: (data: any) => api.post('/surveyresponses/submit', data),
+  
+  // Get user's response history
+  getMyResponses: () => api.get('/surveyresponses/my-responses'),
+
   // Create new survey
   create: (data: any) => api.post('/surveys', data),
   

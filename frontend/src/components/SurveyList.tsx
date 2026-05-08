@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { surveysApi } from '../services/api';
-import CreateSurvey from './CreateSurvey';
 
 interface Survey {
   id: number;
@@ -10,11 +10,7 @@ interface Survey {
   isActive: boolean;
 }
 
-interface SurveyListProps {
-  isMySurveys?: boolean;
-}
-
-const SurveyList: React.FC<SurveyListProps> = ({ isMySurveys = false }) => {
+const SurveyList: React.FC = () => {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,12 +40,14 @@ const SurveyList: React.FC<SurveyListProps> = ({ isMySurveys = false }) => {
       <h2>Available Surveys</h2>
       <ul>
         {surveys.map((survey) => (
-          <li key={survey.id} style={{ marginBottom: '20px' }}>
+          <li key={survey.id} style={{ marginBottom: '20px', border: '1px solid #ddd', padding: '15px' }}>
             <strong>{survey.title}</strong> - {survey.description}
             <br />
             <small>Created: {new Date(survey.createdAt).toLocaleDateString()}</small>
             <div>
-              <button>Take Survey</button>
+              <Link to={`/survey/${survey.id}`}>
+                <button>Take Survey</button>
+              </Link>
             </div>
           </li>
         ))}

@@ -35,7 +35,7 @@ const SurveyTabs: React.FC = () => {
         </button>
       </div>
       
-      {activeTab === 'public' && <SurveyList isMySurveys={false} />}
+      {activeTab === 'public' && <SurveyList />}
       {activeTab === 'my' && <MySurveys />}
     </div>
   );

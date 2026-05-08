@@ -77,6 +77,48 @@ public class SurveysController : ControllerBase
         return surveys;
     }
 
+    [HttpGet("{id}/details")]
+    [AllowAnonymous]
+    public async Task<ActionResult<SurveyDetailDto>> GetSurveyDetails(int id)
+    {
+    var survey = await _context.Surveys
+        .FirstOrDefaultAsync(s => s.Id == id && s.IsActive);
+    
+    if (survey == null)
+        return NotFound("Survey not found or inactive");
+    
+    var questions = await _context.Questions
+        .Where(q => q.SurveyId == id)
+        .ToListAsync();
+    
+    var questionIds = questions.Select(q => q.Id).ToList();
+    
+    var answers = await _context.Answers
+        .Where(a => questionIds.Contains(a.QuestionId))
+        .ToListAsync();
+    
+    var result = new SurveyDetailDto
+    {
+        Id = survey.Id,
+        Title = survey.Title,
+        Description = survey.Description,
+        Questions = questions.Select(q => new QuestionDetailDto
+        {
+            Id = q.Id,
+            Text = q.Text ?? string.Empty,
+            Options = answers
+                .Where(a => a.QuestionId == q.Id)
+                .Select(a => new AnswerOptionDto
+                {
+                    Id = a.Id,
+                    Text = a.Text ?? string.Empty
+                }).ToList()
+        }).ToList()
+    };
+    
+    return Ok(result);
+}
+
     [HttpGet("{id}")]
     [AllowAnonymous]
     public async Task<ActionResult<SurveyResponseDto>> GetSurvey(int id)
