@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import TakeSurvey from './pages/TakeSurvey';
+import EditSurvey from './pages/EditSurvey';
 import SurveyTabs from './components/SurveyTabs';
 import './App.css';
 
@@ -32,6 +33,11 @@ function AppRoutes() {
         <Route path="/survey/:id" element={
           <ProtectedRoute>
             <TakeSurvey />
+          </ProtectedRoute>
+        } />
+        <Route path="/edit/:id" element={
+          <ProtectedRoute>
+            <EditSurvey />
           </ProtectedRoute>
         } />
         <Route path="/" element={

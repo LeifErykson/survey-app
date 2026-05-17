@@ -17,6 +17,7 @@ interface SurveyDetail {
   id: number;
   title: string;
   description: string;
+  isActive: boolean;
   questions: Question[];
 }
 
@@ -113,9 +114,12 @@ const TakeSurvey: React.FC = () => {
           </div>
         ))}
         
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Submitting...' : 'Submit Survey'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          <button type="button" onClick={() => navigate('/')}>Back</button>
+          <button type="submit" disabled={submitting}>
+            {submitting ? 'Submitting...' : 'Submit Survey'}
+          </button>
+        </div>
       </form>
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { surveysApi } from '../services/api';
 import CreateSurvey from './CreateSurvey';
 
@@ -13,9 +14,6 @@ interface Survey {
 const MySurveys: React.FC = () => {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editTitle, setEditTitle] = useState('');
-  const [editDescription, setEditDescription] = useState('');
 
   const loadSurveys = async () => {
     try {
@@ -59,82 +57,40 @@ const MySurveys: React.FC = () => {
     }
   };
 
-  const startEdit = (survey: Survey) => {
-    setEditingId(survey.id);
-    setEditTitle(survey.title);
-    setEditDescription(survey.description);
-  };
-
-  const saveEdit = async (id: number) => {
-    try {
-      await surveysApi.update(id, {
-        title: editTitle,
-        description: editDescription,
-        isActive: surveys.find(s => s.id === id)?.isActive || true
-      });
-      setEditingId(null);
-      await loadSurveys();
-    } catch (error) {
-      console.error('Save failed:', error);
-      alert('Failed to save changes');
-    }
-  };
-
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditTitle('');
-    setEditDescription('');
-  };
-
   if (loading) return <div>Loading your surveys...</div>;
 
   if (surveys.length === 0) {
-    return <div>You haven't created any surveys yet. Click "Create New Survey" to get started!</div>;
+    return (
+      <div>
+        <CreateSurvey onSurveyCreated={loadSurveys} />
+        <p>You haven't created any surveys yet. Click "Create New Survey" to get started!</p>
+      </div>
+    );
   }
 
   return (
     <div>
       <h2>My Surveys</h2>
-      <div style={{ marginBottom: '20px' }}>
-        <CreateSurvey onSurveyCreated={loadSurveys} />
-      </div>
+      <CreateSurvey onSurveyCreated={loadSurveys} />
       <ul>
         {surveys.map((survey) => (
-          <li key={survey.id} style={{ opacity: survey.isActive ? 1 : 0.5, marginBottom: '20px' }}>
-            {editingId === survey.id ? (
-              <div>
-                <input
-                  type="text"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                  style={{ width: '100%', marginBottom: '10px' }}
-                />
-                <textarea
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                  style={{ width: '100%', marginBottom: '10px' }}
-                />
-                <button onClick={() => saveEdit(survey.id)}>Save</button>
-                <button onClick={cancelEdit}>Cancel</button>
-              </div>
-            ) : (
-              <div>
-                <strong>{survey.title}</strong> - {survey.description}
-                <br />
-                <small>Status: {survey.isActive ? 'Active' : 'Inactive'}</small>
-                <div>
-                  <button onClick={() => handleToggleActive(survey.id, survey.isActive)}>
-                    {survey.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
-                  <button onClick={() => startEdit(survey)} style={{ marginLeft: '10px' }}>
-                    Edit
-                  </button>
-                  <button onClick={() => handleDelete(survey.id)} style={{ marginLeft: '10px' }}>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            )}
+          <li key={survey.id} style={{ opacity: survey.isActive ? 1 : 0.5, marginBottom: '20px', border: '1px solid #ddd', padding: '15px' }}>
+            <strong>{survey.title}</strong> - {survey.description}
+            <br />
+            <small>Status: {survey.isActive ? 'Active' : 'Inactive'}</small>
+            <br />
+            <small>Created: {new Date(survey.createdAt).toLocaleDateString()}</small>
+            <div style={{ marginTop: '10px' }}>
+              <Link to={`/edit/${survey.id}`}>
+                <button style={{ marginRight: '10px' }}>Edit Questions</button>
+              </Link>
+              <button onClick={() => handleToggleActive(survey.id, survey.isActive)} style={{ marginRight: '10px' }}>
+                {survey.isActive ? 'Deactivate' : 'Activate'}
+              </button>
+              <button onClick={() => handleDelete(survey.id)}>
+                Delete
+              </button>
+            </div>
           </li>
         ))}
       </ul>
