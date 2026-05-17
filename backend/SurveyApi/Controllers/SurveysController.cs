@@ -102,6 +102,7 @@ public class SurveysController : ControllerBase
         Id = survey.Id,
         Title = survey.Title,
         Description = survey.Description,
+        IsActive = survey.IsActive,
         Questions = questions.Select(q => new QuestionDetailDto
         {
             Id = q.Id,
