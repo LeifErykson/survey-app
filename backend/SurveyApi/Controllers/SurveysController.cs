@@ -113,7 +113,8 @@ public class SurveysController : ControllerBase
                 {
                     Id = a.Id,
                     Text = a.Text ?? string.Empty
-                }).ToList()
+                }).ToList(),
+            Type = q.Type
         }).ToList()
     };
     

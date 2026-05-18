@@ -36,7 +36,8 @@ public class QuestionsController : ControllerBase
         var question = new Question
         {
             Text = createDto.Text,
-            SurveyId = createDto.SurveyId
+            SurveyId = createDto.SurveyId,
+            Type = createDto.Type
         };
         
         _context.Questions.Add(question);
@@ -46,7 +47,8 @@ public class QuestionsController : ControllerBase
         {
             Id = question.Id,
             Text = question.Text ?? string.Empty,
-            SurveyId = question.SurveyId
+            SurveyId = question.SurveyId,
+            Type = question.Type ?? string.Empty
         });
     }
     
@@ -67,6 +69,7 @@ public class QuestionsController : ControllerBase
             return Forbid("You can only edit questions from your own surveys");
         
         question.Text = updateDto.Text;
+        question.Type = updateDto.Type;
         await _context.SaveChangesAsync();
         
         return NoContent();

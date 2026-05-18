@@ -11,6 +11,7 @@ interface AnswerOption {
 interface Question {
   id: number;
   text: string;
+  type: string;
   options: AnswerOption[];
 }
 
@@ -29,6 +30,7 @@ const EditSurvey: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [newQuestionText, setNewQuestionText] = useState('');
+  const [newQuestionType, setNewQuestionType] = useState('single');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
@@ -76,13 +78,27 @@ const EditSurvey: React.FC = () => {
     try {
       await api.post('/questions', {
         text: newQuestionText,
-        surveyId: Number(id)
+        surveyId: Number(id),
+        type: newQuestionType
       });
       setNewQuestionText('');
       await loadSurvey();
     } catch (error) {
       console.error('Error adding question:', error);
       alert('Failed to add question');
+    }
+  };
+
+  const updateQuestionType = async (questionId: number, questionType: string) => {
+    try {
+      await api.put(`/questions/${questionId}`, {
+        text: survey?.questions.find(q => q.id === questionId)?.text,
+        type: questionType
+      });
+      await loadSurvey();
+    } catch (error) {
+      console.error('Error updating question type:', error);
+      alert('Failed to update question type');
     }
   };
 
@@ -126,12 +142,12 @@ const EditSurvey: React.FC = () => {
   if (loading) return <div>Loading...</div>;
   if (!survey) return <div>Survey not found</div>;
 
-   return (
+  return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1>Edit Survey</h1>
         <div>
-          <button onClick={() => navigate('/')} style={{ marginRight: '10px' }}>Back</button>
+          <button onClick={() => navigate('/')} style={{ marginRight: '10px' }}>Cancel</button>
           <button onClick={saveSurvey} disabled={saving}>
             {saving ? 'Saving...' : 'Save Survey'}
           </button>
@@ -170,12 +186,30 @@ const EditSurvey: React.FC = () => {
           onChange={(e) => setNewQuestionText(e.target.value)}
           style={{ marginRight: '10px', padding: '5px', width: '300px' }}
         />
+        <select
+          value={newQuestionType}
+          onChange={(e) => setNewQuestionType(e.target.value)}
+          style={{ marginRight: '10px', padding: '5px' }}
+        >
+          <option value="single">Single Choice</option>
+          <option value="multiple">Multiple Choice</option>
+        </select>
         <button onClick={addQuestion}>Add Question</button>
       </div>
       
       {survey.questions.map((question, qIndex) => (
         <div key={question.id} style={{ border: '1px solid #ccc', marginBottom: '20px', padding: '15px', borderRadius: '5px' }}>
-          <h3>Question {qIndex + 1}: {question.text}</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3>Question {qIndex + 1}: {question.text}</h3>
+            <select
+              value={question.type}
+              onChange={(e) => updateQuestionType(question.id, e.target.value)}
+              style={{ padding: '5px' }}
+            >
+              <option value="single">Single Choice</option>
+              <option value="multiple">Multiple Choice</option>
+            </select>
+          </div>
           <button onClick={() => deleteQuestion(question.id)}>Delete Question</button>
           
           <h4>Answer Options</h4>

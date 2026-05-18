@@ -13,6 +13,7 @@ public class QuestionDetailDto
 {
     public int Id { get; set; }
     public string Text { get; set; } = string.Empty;
+    public string Type { get; set; } = "single";
     public List<AnswerOptionDto> Options { get; set; } = new List<AnswerOptionDto>();
 }
 

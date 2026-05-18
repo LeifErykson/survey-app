@@ -10,6 +10,7 @@ interface AnswerOption {
 interface Question {
   id: number;
   text: string;
+  type: string;
   options: AnswerOption[];
 }
 
@@ -21,12 +22,14 @@ interface SurveyDetail {
   questions: Question[];
 }
 
+type SelectedAnswers = Record<number, number[]>;
+
 const TakeSurvey: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [survey, setSurvey] = useState<SurveyDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
+  const [selectedAnswers, setSelectedAnswers] = useState<SelectedAnswers>({});
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -46,18 +49,39 @@ const TakeSurvey: React.FC = () => {
     }
   };
 
-  const handleAnswerSelect = (questionId: number, answerId: number) => {
+  const handleSingleSelect = (questionId: number, answerId: number) => {
     setSelectedAnswers(prev => ({
       ...prev,
-      [questionId]: answerId
+      [questionId]: [answerId]
     }));
   };
 
+  const handleMultipleSelect = (questionId: number, answerId: number) => {
+    setSelectedAnswers(prev => {
+      const current = prev[questionId] || [];
+      if (current.includes(answerId)) {
+        return {
+          ...prev,
+          [questionId]: current.filter(id => id !== answerId)
+        };
+      } else {
+        return {
+          ...prev,
+          [questionId]: [...current, answerId]
+        };
+      }
+    });
+  };
+
   const handleSubmit = async () => {
-    // Check if all questions are answered
     if (!survey) return;
     
-    const allAnswered = survey.questions.every(q => selectedAnswers[q.id]);
+    // Check if all questions are answered
+    const allAnswered = survey.questions.every(q => {
+      const answers = selectedAnswers[q.id];
+      return answers && answers.length > 0;
+    });
+    
     if (!allAnswered) {
       alert('Please answer all questions before submitting');
       return;
@@ -65,10 +89,13 @@ const TakeSurvey: React.FC = () => {
 
     setSubmitting(true);
     try {
-      const answers = Object.entries(selectedAnswers).map(([questionId, answerId]) => ({
-        questionId: Number(questionId),
-        answerId: answerId
-      }));
+      // Flatten answers for submission
+      const answers = Object.entries(selectedAnswers).flatMap(([questionId, answerIds]) =>
+        answerIds.map(answerId => ({
+          questionId: Number(questionId),
+          answerId: answerId
+        }))
+      );
 
       await surveysApi.submitResponse({
         surveyId: survey.id,
@@ -90,22 +117,34 @@ const TakeSurvey: React.FC = () => {
 
   return (
     <div>
-      <h1>{survey.title}</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1>{survey.title}</h1>
+        <button onClick={() => navigate('/')}>Back to Surveys</button>
+      </div>
       <p>{survey.description}</p>
       
       <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
         {survey.questions.map((question, index) => (
-          <div key={question.id} style={{ marginBottom: '30px', border: '1px solid #ccc', padding: '15px' }}>
-            <h3>Question {index + 1}: {question.text}</h3>
+          <div key={question.id} style={{ marginBottom: '30px', border: '1px solid #ccc', padding: '15px', borderRadius: '5px' }}>
+            <h3>
+              Question {index + 1}: {question.text}
+              {question.type === 'multiple' && <small style={{ marginLeft: '10px', color: '#666' }}>(Select all that apply)</small>}
+            </h3>
             <div>
               {question.options.map(option => (
                 <label key={option.id} style={{ display: 'block', margin: '10px 0' }}>
                   <input
-                    type="radio"
+                    type={question.type === 'multiple' ? 'checkbox' : 'radio'}
                     name={`question_${question.id}`}
                     value={option.id}
-                    checked={selectedAnswers[question.id] === option.id}
-                    onChange={() => handleAnswerSelect(question.id, option.id)}
+                    checked={selectedAnswers[question.id]?.includes(option.id) || false}
+                    onChange={() => {
+                      if (question.type === 'multiple') {
+                        handleMultipleSelect(question.id, option.id);
+                      } else {
+                        handleSingleSelect(question.id, option.id);
+                      }
+                    }}
                   />
                   {option.text}
                 </label>
@@ -115,7 +154,7 @@ const TakeSurvey: React.FC = () => {
         ))}
         
         <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-          <button type="button" onClick={() => navigate('/')}>Back</button>
+          <button type="button" onClick={() => navigate('/')}>Cancel</button>
           <button type="submit" disabled={submitting}>
             {submitting ? 'Submitting...' : 'Submit Survey'}
           </button>
