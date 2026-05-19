@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import SurveyList from './SurveyList';
 import MySurveys from './MySurveys';
+import ResponseHistory from './ResponseHistory';
 
 const SurveyTabs: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'public' | 'my'>('public');
+  const [activeTab, setActiveTab] = useState<'public' | 'my' | 'history'>('public');
 
   return (
     <div>
@@ -28,15 +29,29 @@ const SurveyTabs: React.FC = () => {
             background: activeTab === 'my' ? '#007bff' : '#f0f0f0',
             color: activeTab === 'my' ? 'white' : 'black',
             border: 'none',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            marginRight: '10px'
           }}
         >
           My Surveys
+        </button>
+        <button
+          onClick={() => setActiveTab('history')}
+          style={{
+            padding: '10px 20px',
+            background: activeTab === 'history' ? '#007bff' : '#f0f0f0',
+            color: activeTab === 'history' ? 'white' : 'black',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          Response History
         </button>
       </div>
       
       {activeTab === 'public' && <SurveyList />}
       {activeTab === 'my' && <MySurveys />}
+      {activeTab === 'history' && <ResponseHistory />}
     </div>
   );
 };

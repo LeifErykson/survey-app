@@ -67,27 +67,48 @@ public class SurveyResponsesController : ControllerBase
     
     var responses = await _context.FilledSurveys
         .Where(fs => fs.UserId == userId)
-        .Select(fs => new
-        {
-            fs.Id,
-            fs.SurveyId,
-            fs.CreatedAt
-        })
+        .OrderByDescending(fs => fs.CreatedAt)
         .ToListAsync();
     
-    // Get survey titles separately if needed
+    // Get survey titles
     var surveyIds = responses.Select(r => r.SurveyId).Distinct();
     var surveys = await _context.Surveys
         .Where(s => surveyIds.Contains(s.Id))
         .ToDictionaryAsync(s => s.Id, s => s.Title);
     
-    var result = responses.Select(r => new
+    // Get answers for each response
+    var result = new List<object>();
+    
+    foreach (var response in responses)
     {
-        r.Id,
-        r.SurveyId,
-        SurveyTitle = surveys.ContainsKey(r.SurveyId) ? surveys[r.SurveyId] : "Unknown",
-        r.CreatedAt
-    });
+        var chosenAnswers = await _context.ChoosenAnswers
+            .Where(ca => ca.FilledSurveyId == response.Id)
+            .ToListAsync();
+        
+        var answerIds = chosenAnswers.Select(ca => ca.AnswerId).ToList();
+        var answers = await _context.Answers
+            .Where(a => answerIds.Contains(a.Id))
+            .ToListAsync();
+        
+        var questionIds = answers.Select(a => a.QuestionId).Distinct();
+        var questions = await _context.Questions
+            .Where(q => questionIds.Contains(q.Id))
+            .ToDictionaryAsync(q => q.Id, q => q.Text ?? "Unknown");
+        
+        result.Add(new
+        {
+            FilledSurveyId = response.Id,
+            SurveyId = response.SurveyId,
+            SurveyTitle = surveys.GetValueOrDefault(response.SurveyId, "Unknown"),
+            SubmittedAt = response.CreatedAt,
+            Answers = answers.Select(a => new
+            {
+                QuestionId = a.QuestionId,
+                QuestionText = questions.GetValueOrDefault(a.QuestionId, "Unknown"),
+                AnswerText = a.Text ?? "Unknown"
+            })
+        });
+    }
     
     return Ok(result);
     }
