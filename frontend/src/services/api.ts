@@ -25,6 +25,8 @@ export const surveysApi = {
   // User's own surveys (created by logged-in user)
   getMySurveys: () => api.get('/surveys/my'),
   
+  getSurveyStats: (id: number) => api.get(`/surveys/${id}/stats`),
+
   // Get single survey by ID
   getById: (id: number) => api.get(`/surveys/${id}`),
   

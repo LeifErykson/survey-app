@@ -139,6 +139,87 @@ public class SurveysController : ControllerBase
         };
     }
     
+    [HttpGet("{id}/stats")]
+    public async Task<ActionResult<SurveyStatsDto>> GetSurveyStats(int id)
+    {
+    // Verify survey exists and user owns it
+    var survey = await _context.Surveys.FindAsync(id);
+    if (survey == null)
+        return NotFound("Survey not found");
+    
+    var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+    if (survey.UserId != userId && !User.IsInRole("Admin"))
+        return Forbid("You can only view stats for your own surveys");
+    
+    // Get all responses for this survey
+    var filledSurveys = await _context.FilledSurveys
+        .Where(fs => fs.SurveyId == id)
+        .ToListAsync();
+    
+    var totalResponses = filledSurveys.Count;
+    
+    // Get all questions for this survey
+    var questions = await _context.Questions
+        .Where(q => q.SurveyId == id)
+        .ToListAsync();
+    
+    // Get all chosen answers for responses
+    var filledSurveyIds = filledSurveys.Select(fs => fs.Id).ToList();
+    var chosenAnswers = await _context.ChoosenAnswers
+        .Where(ca => filledSurveyIds.Contains(ca.FilledSurveyId))
+        .ToListAsync();
+    
+    var answerIds = chosenAnswers.Select(ca => ca.AnswerId).Distinct().ToList();
+    var answers = await _context.Answers
+        .Where(a => answerIds.Contains(a.Id))
+        .ToDictionaryAsync(a => a.Id, a => a);
+    
+    // Build stats per question
+    var questionStats = new List<QuestionStatsDto>();
+    
+    foreach (var question in questions)
+    {
+        // Get answers for this question
+        var questionAnswers = await _context.Answers
+            .Where(a => a.QuestionId == question.Id)
+            .ToListAsync();
+        
+        var answerStats = new List<AnswerStatsDto>();
+        
+        foreach (var answer in questionAnswers)
+        {
+            var count = chosenAnswers.Count(ca => ca.AnswerId == answer.Id);
+            var percentage = totalResponses > 0 ? (count * 100.0 / totalResponses) : 0;
+            
+            answerStats.Add(new AnswerStatsDto
+            {
+                AnswerId = answer.Id,
+                AnswerText = answer.Text ?? string.Empty,
+                Count = count,
+                Percentage = Math.Round(percentage, 1)
+            });
+        }
+        
+        questionStats.Add(new QuestionStatsDto
+        {
+            QuestionId = question.Id,
+            QuestionText = question.Text ?? string.Empty,
+            QuestionType = question.Type ?? "single",
+            AnswerStats = answerStats
+        });
+    }
+    
+    var result = new SurveyStatsDto
+    {
+        SurveyId = survey.Id,
+        SurveyTitle = survey.Title,
+        TotalResponses = totalResponses,
+        Questions = questionStats
+    };
+    
+    return Ok(result);
+    }
+
     [HttpPost]
     public async Task<ActionResult<SurveyResponseDto>> CreateSurvey(CreateSurveyDto createDto)
     {

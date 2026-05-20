@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { surveysApi } from '../services/api';
 import CreateSurvey from './CreateSurvey';
+import SurveyStats from './SurveyStats';
 
 interface Survey {
   id: number;
@@ -14,6 +15,8 @@ interface Survey {
 const MySurveys: React.FC = () => {
   const [surveys, setSurveys] = useState<Survey[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null);
+  const [selectedSurveyTitle, setSelectedSurveyTitle] = useState('');
 
   const loadSurveys = async () => {
     try {
@@ -57,6 +60,16 @@ const MySurveys: React.FC = () => {
     }
   };
 
+  const handleViewStats = (id: number, title: string) => {
+    setSelectedSurveyId(id);
+    setSelectedSurveyTitle(title);
+  };
+
+  const closeStats = () => {
+    setSelectedSurveyId(null);
+    setSelectedSurveyTitle('');
+  };
+
   if (loading) return <div>Loading your surveys...</div>;
 
   if (surveys.length === 0) {
@@ -84,6 +97,9 @@ const MySurveys: React.FC = () => {
               <Link to={`/edit/${survey.id}`}>
                 <button style={{ marginRight: '10px' }}>Edit Questions</button>
               </Link>
+              <button onClick={() => handleViewStats(survey.id, survey.title)} style={{ marginRight: '10px' }}>
+                View Stats
+              </button>
               <button onClick={() => handleToggleActive(survey.id, survey.isActive)} style={{ marginRight: '10px' }}>
                 {survey.isActive ? 'Deactivate' : 'Activate'}
               </button>
@@ -94,6 +110,14 @@ const MySurveys: React.FC = () => {
           </li>
         ))}
       </ul>
+      
+      {selectedSurveyId !== null && (
+        <SurveyStats
+          surveyId={selectedSurveyId}
+          surveyTitle={selectedSurveyTitle}
+          onClose={closeStats}
+        />
+      )}
     </div>
   );
 };
