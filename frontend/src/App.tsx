@@ -5,14 +5,19 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import TakeSurvey from './pages/TakeSurvey';
 import EditSurvey from './pages/EditSurvey';
+import AdminPanel from './pages/AdminPanel';
 import SurveyTabs from './components/SurveyTabs';
 import './App.css';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const ProtectedRoute: React.FC<{ children: React.ReactNode; requireAdmin?: boolean }> = ({ 
+  children, 
+  requireAdmin = false 
+}) => {
   const { user, loading } = useAuth();
   
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  if (requireAdmin && !user.isAdmin) return <div>Access denied. Admin privileges required.</div>;
   return <>{children}</>;
 };
 
@@ -38,6 +43,11 @@ function AppRoutes() {
         <Route path="/edit/:id" element={
           <ProtectedRoute>
             <EditSurvey />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin" element={
+          <ProtectedRoute requireAdmin={true}>
+            <AdminPanel />
           </ProtectedRoute>
         } />
         <Route path="/" element={
